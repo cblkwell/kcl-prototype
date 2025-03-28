@@ -9,6 +9,15 @@ kubernetesRender = lambda a: app.App {
     metadata.name = "${a.name}-default"
     metadata.namespace = "services"
   }
+
+  global_env = corev1.ConfigMap {
+    metadata.name = "${a.name}-global-env"
+    metadata.namespace = "services"
+    data = a.global_env_vars
+  }
+
+  service_secret = "service/${a.name}"
+
   deployments = [ appsv1.Deployment {
     metadata.name = "${a.name}-${d.suffix}"
     metadata.namespace = "services"
@@ -45,6 +54,10 @@ kubernetesRender = lambda a: app.App {
             configMapRef = {
               name = "cluster-constants"
             }
+          }, {
+            configMapRef = {
+              name = "${a.name}-global-env"
+            }
           }]
           resources = d.resources
           ports = d.ports
@@ -53,7 +66,11 @@ kubernetesRender = lambda a: app.App {
     }
   } for _ , d in a.deployments ]
 
-  [serviceaccount, if a.deployments: deployments]
+  [
+    serviceaccount,
+    global_env,
+    if a.deployments: deployments
+  ]
 }
 
 manifests.yaml_stream(sum([kubernetesRender(a) for a in app.App.instances()], []))
