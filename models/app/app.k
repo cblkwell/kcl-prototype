@@ -1,8 +1,10 @@
 import k8s.api.core.v1 as corev1
+
 import models.mixins
 
 schema App:
   name: str
+  namespace: str = "services"
   global_env_vars?: {str:str}
   image: str
   deployments?: {str:Deploy}
@@ -11,8 +13,6 @@ schema App:
   global_ref_secrets?: [str]
 
 schema Deploy:
-  mixin [mixins.DeployEnvMixin]
- 
   suffix: str
   service_account?: str
   env_vars?: {str:str}
