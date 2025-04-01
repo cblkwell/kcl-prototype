@@ -16,8 +16,6 @@ _resource_array: [resource.ResourceMapping] = [
   _inst?.kubernetes for _inst in _backendInstances if _inst?.kubernetes
 ]
 
-#_resource_union = sum(_resource_array, [])
-
 _resource_map: resource.ResourceMapping = {
   _kind += [r for key, r in _res] \
     for _index, _res_map in _resource_array \

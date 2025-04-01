@@ -7,8 +7,8 @@ import models.protocol
 
 mixin DeploymentMixin for protocol.AppProtocol:
     if config.deployments:
-        kubernetes: resource.ResourceMapping = {
-            "Deployment" = [ appsv1.Deployment {
+        kubernetes: resource.ResourceMapping {
+            "Deployment" += [ appsv1.Deployment {
                 metadata.name = "${config.name}-${_d.suffix}"
                 metadata.namespace = "${config.namespace}"
                 spec = {
@@ -60,7 +60,7 @@ mixin DeploymentMixin for protocol.AppProtocol:
                 }
             } for _k, _d in config.deployments]
 
-            "ConfigMap" = [ corev1.ConfigMap {
+            "ConfigMap" += [ corev1.ConfigMap {
                 metadata: {
                     name: "${config.name}-${_d.suffix}-env"
                     namespace: config.namespace
@@ -68,7 +68,7 @@ mixin DeploymentMixin for protocol.AppProtocol:
                 data = _d.env_vars
             } for _k, _d in config.deployments if _d.env_vars ]
 
-            "Service" = [ corev1.Service {
+            "Service" += [ corev1.Service {
                 metadata: {
                     name = "${config.name}-${_d.suffix}"
                     namespace = appNamespace
