@@ -3,8 +3,9 @@ import k8s.api.core.v1 as corev1
 import konfig.models.kube.resource
 
 import models.app
+import models.protocol
 
-mixin DeploymentMixin:
+mixin DeploymentMixin for protocol.AppProtocol:
     if config.deployments:
         kubernetes: resource.ResourceMapping = {
             "Deployment" = [ appsv1.Deployment {
