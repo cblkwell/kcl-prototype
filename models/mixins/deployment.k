@@ -1,0 +1,89 @@
+import k8s.api.apps.v1 as appsv1
+import k8s.api.core.v1 as corev1
+import konfig.models.kube.resource
+
+import models.app
+
+mixin DeploymentMixin:
+    if config.deployments:
+        kubernetes: resource.ResourceMapping = {
+            "Deployment" = [ appsv1.Deployment {
+                metadata.name = "${config.name}-${_d.suffix}"
+                metadata.namespace = "${config.namespace}"
+                spec = {
+                    replicas = _d.replicas
+                    selector = {
+                        matchLabels = {
+                            "app.kubernetes.io/name" = "${config.name}-${_d.suffix}"
+                        }
+                    }
+                    template.spec.containers = [
+                        {
+                            name = "${config.name}-${_d.suffix}"
+                            image = config.image
+                            command = [ "bash", "-c", "node .node_modules/.bin/redox-start -- src/index.ts" ]
+                            env = [{
+                                name = "MY_POD_NAME"
+                                valueFrom = {
+                                    fieldRef = {
+                                        apiVersion = "v1"
+                                        fieldPath = "metadata.name"
+                                    }
+                                }
+                            }, {
+                                name = "MY_POD_NAMESPACE"
+                                valueFrom = {
+                                    fieldRef = {
+                                        apiVersion = "v1"
+                                        fieldPath = "metadata.namespace"
+                                    }
+                                }
+                            }]
+                            envFrom = [{
+                                configMapRef = {
+                                    name = "cluster-constants"
+                                }
+                            }, {
+                                configMapRef = {
+                                    name = "${config.name}-global-env"
+                                }
+                            }, {
+                                configMapRef = {
+                                    name = "${config.name}-${_d.suffix}-env"
+                                }
+                            }]
+                            resources = _d.resources
+                            ports = _d.ports
+                        }
+                    ]
+                }
+            } for _k, _d in config.deployments]
+
+            "ConfigMap" = [ corev1.ConfigMap {
+                metadata: {
+                    name: "${config.name}-${_d.suffix}-env"
+                    namespace: config.namespace
+                }
+                data = _d.env_vars
+            } for _k, _d in config.deployments if _d.env_vars ]
+
+            "Service" = [ corev1.Service {
+                metadata: {
+                    name = "${config.name}-${_d.suffix}"
+                    namespace = appNamespace
+
+                }
+                spec: {
+                    type = "ClusterIP"
+                    ports: [{
+                        name = "https"
+                        port = 443
+                        targetPort = 3443
+                    }]
+                    selector = {
+                        "app.kubernetes.io/component" = _d.suffix
+                        "app.kubernetes.io/part-of" = config.name
+                    }
+                }
+            } for _k, _d in config.deployments if _d.service ]
+        }

@@ -4,9 +4,12 @@ import konfig.models.kube.resource
 import konfig.models.kube.utils
 
 import models.app
-# import models.mixins
+import models.mixins
 
 schema AppBackend[inputConfig: app.App]:
+  mixin [
+    mixins.DeploymentMixin
+  ]
   # We need to set a variable for mixins to pull in.
   config: app.App = inputConfig
 
@@ -25,11 +28,11 @@ schema AppBackend[inputConfig: app.App]:
     }
   }
 
-  if config.deployments:
-    deployments = [ DeployBackend(d, config.name, config.namespace) for _, d in config.deployments ]
-    deploy_kube = [ inst?.kubernetes for _, inst in deployments ]
+  #if config.deployments:
+  #  deployments = [ DeployBackend(d, config.name, config.namespace) for _, d in config.deployments ]
+  #  deploy_kube = [ inst?.kubernetes for _, inst in deployments ]
 
-  kubernetes: [resource.ResourceMapping] = [{
+  kubernetes: resource.ResourceMapping = {
       "ConfigMap" = [globalEnvConfigMap]
       "ServiceAccount" = [serviceAccount]
-  }] + deploy_kube
+  }

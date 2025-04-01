@@ -1,7 +1,5 @@
 import k8s.api.core.v1 as corev1
 
-import models.mixins
-
 schema App:
   name: str
   namespace: str = "services"

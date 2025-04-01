@@ -12,15 +12,15 @@ manifestsResourceMap = lambda resource_map: {str: []} {
 _frontendInstances = [inst for inst in app.App.instances()]
 _backendInstances = [backend.AppBackend(inst) for inst in _frontendInstances]
 
-_resource_array: [[resource.ResourceMapping]] = [
+_resource_array: [resource.ResourceMapping] = [
   _inst?.kubernetes for _inst in _backendInstances if _inst?.kubernetes
 ]
 
-_resource_union = sum(_resource_array, [])
+#_resource_union = sum(_resource_array, [])
 
 _resource_map: resource.ResourceMapping = {
   _kind += [r for key, r in _res] \
-    for _index, _res_map in _resource_union \
+    for _index, _res_map in _resource_array \
       for _kind, _res in _res_map
 }
 
