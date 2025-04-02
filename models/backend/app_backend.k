@@ -55,23 +55,15 @@ objectType: "secretsmanager"
     }
   }
 
-#  if config.ref_secrets:
-#    globalRefSecrets: [secretsv1.SecretProviderClass] = [
-#      secretsv1.SecretProviderClass {
-#        metadata.name = _s
-#        metadata.name = config.namespace
-#        spec = {
-#          provider = "aws"
-#          parameters = {
-#            objects = """objectName: _s.refSecret
-#              objectType: "secretsmanager"
-#"""
-#          }
-#        }
-#      } for _s in config.ref_secrets ]
+  if config.ref_secrets:
+    globalRefSecrets: [secretsv1.SecretProviderClass] = [
+      app.RefSecret(_s, config.namespace).secret for _i, _s in config.ref_secrets
+    ]
+
+  secretProviderClasses: [secretsv1.SecretProviderClass] = sum([[serviceSecret, metadataSecret],globalRefSecrets],[])
 
   kubernetes: resource.ResourceMapping = {
-      "ConfigMap" = [globalEnvConfigMap]
-      "ServiceAccount" = [serviceAccount]
-      "SecretProviderClass" = [serviceSecret, metadataSecret]
+    "ConfigMap" = [globalEnvConfigMap]
+    "ServiceAccount" = [serviceAccount]
+    "SecretProviderClass" = [secretProviderClasses]
   }

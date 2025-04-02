@@ -18,45 +18,63 @@ mixin DeploymentMixin for protocol.AppProtocol:
                             "app.kubernetes.io/name" = "${config.name}-${_d.suffix}"
                         }
                     }
-                    template.spec.containers = [
-                        {
-                            name = "${config.name}-${_d.suffix}"
-                            image = config.image
-                            command = [ "bash", "-c", "node .node_modules/.bin/redox-start -- src/index.ts" ]
-                            env = [{
-                                name = "MY_POD_NAME"
-                                valueFrom = {
-                                    fieldRef = {
-                                        apiVersion = "v1"
-                                        fieldPath = "metadata.name"
+                    template.spec = { 
+                        serviceAccountName = "${config.name}-default"
+                        containers = [
+                            {
+                                name = "${config.name}-${_d.suffix}"
+                                image = config.image
+                                command = [ "bash", "-c", "node .node_modules/.bin/redox-start -- src/index.ts" ]
+                                env = [{
+                                    name = "MY_POD_NAME"
+                                    valueFrom = {
+                                        fieldRef = {
+                                            apiVersion = "v1"
+                                            fieldPath = "metadata.name"
+                                        }
+                                     }
+                                }, {
+                                    name = "MY_POD_NAMESPACE"
+                                    valueFrom = {
+                                        fieldRef = {
+                                            apiVersion = "v1"
+                                            fieldPath = "metadata.namespace"
+                                        }
                                     }
-                                }
-                            }, {
-                                name = "MY_POD_NAMESPACE"
-                                valueFrom = {
-                                    fieldRef = {
-                                        apiVersion = "v1"
-                                        fieldPath = "metadata.namespace"
+                                }]
+                                envFrom = [{
+                                    configMapRef = {
+                                        name = "cluster-constants"
                                     }
+                                }, {
+                                    configMapRef = {
+                                        name = "${config.name}-global-env"
+                                    }
+                                }, {
+                                    configMapRef = {
+                                        name = "${config.name}-${_d.suffix}-env"
+                                    }   
+                                }]
+                                resources = _d.resources
+                                ports = _d.ports
+                                volumeMounts = [ corev1.VolumeMount {
+                                    mountPath = "/mnt/secrets/${_s.metadata.name}"
+                                    name = _s.metadata.name
+                                    readOnly = True
+                                } for _i, _s in secretProviderClasses ]
+                            }
+                        ]
+                        volumes = [ corev1.Volume {
+                            csi = {
+                                driver = "secrets-store.csi.k8s.io"
+                                readOnly = True
+                                volumeAttributes = {
+                                   secretProviderClass = _s.metadata.name
                                 }
-                            }]
-                            envFrom = [{
-                                configMapRef = {
-                                    name = "cluster-constants"
-                                }
-                            }, {
-                                configMapRef = {
-                                    name = "${config.name}-global-env"
-                                }
-                            }, {
-                                configMapRef = {
-                                    name = "${config.name}-${_d.suffix}-env"
-                                }
-                            }]
-                            resources = _d.resources
-                            ports = _d.ports
-                        }
-                    ]
+                            }
+                            name = _s.metadata.name
+                        } for _i, _s in secretProviderClasses ]
+                    }
                 }
             } for _k, _d in config.deployments]
 
@@ -87,4 +105,8 @@ mixin DeploymentMixin for protocol.AppProtocol:
                     }
                 }
             } for _k, _d in config.deployments if _d.service ]
+
+        #    "SecretProviderClass" += [
+        #      app.RefSecret(_s, config.namespace).secret for _i, _s in _d.ref_secrets
+        #    ]    
         }

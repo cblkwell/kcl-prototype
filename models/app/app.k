@@ -1,4 +1,5 @@
 import k8s.api.core.v1 as corev1
+import secrets_store_csi_driver.v1 as secretsv1
 
 schema App:
   name: str
@@ -42,3 +43,17 @@ schema Deploy:
       protocol: "TCP"
     }
   ]
+
+schema RefSecret[secret_name: str, secret_namespace: str]:
+  secret: secretsv1.SecretProviderClass = secretsv1.SecretProviderClass {
+    metadata.name = secret_name
+    metadata.namespace = secret_namespace
+    spec = {
+      provider = "aws"
+      parameters = {
+        objects = """objectname: ${secret_name}
+objectType: "secretsmanager"
+"""
+      }
+    }
+  }
