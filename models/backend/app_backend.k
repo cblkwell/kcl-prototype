@@ -1,5 +1,6 @@
 import k8s.api.apps.v1 as appsv1
 import k8s.api.core.v1 as corev1
+import secrets_store_csi_driver.v1 as secretsv1
 import konfig.models.kube.resource
 import konfig.models.kube.utils
 
@@ -28,11 +29,49 @@ schema AppBackend[inputConfig: app.App]:
     }
   }
 
-  #if config.deployments:
-  #  deployments = [ DeployBackend(d, config.name, config.namespace) for _, d in config.deployments ]
-  #  deploy_kube = [ inst?.kubernetes for _, inst in deployments ]
+  serviceSecret = secretsv1.SecretProviderClass {
+    metadata.name = "${config.name}-services"
+    metadata.namespace = config.namespace
+    spec = {
+      provider = "aws"
+      parameters = {
+        objects = """objectName: services/${config.name}
+objectType: "secretsmanager"
+"""
+      }
+    }
+  }
+
+  metadataSecret = secretsv1.SecretProviderClass {
+    metadata.name = "${config.name}-service-metadata"
+    metadata.namespace = config.namespace
+    spec = {
+      provider = "aws"
+      parameters = {
+        objects = """objectName: service-metadata/${config.name}
+objectType: "secretsmanager"
+"""
+      }
+    }
+  }
+
+#  if config.ref_secrets:
+#    globalRefSecrets: [secretsv1.SecretProviderClass] = [
+#      secretsv1.SecretProviderClass {
+#        metadata.name = _s
+#        metadata.name = config.namespace
+#        spec = {
+#          provider = "aws"
+#          parameters = {
+#            objects = """objectName: _s.refSecret
+#              objectType: "secretsmanager"
+#"""
+#          }
+#        }
+#      } for _s in config.ref_secrets ]
 
   kubernetes: resource.ResourceMapping = {
       "ConfigMap" = [globalEnvConfigMap]
       "ServiceAccount" = [serviceAccount]
+      "SecretProviderClass" = [serviceSecret, metadataSecret]
   }

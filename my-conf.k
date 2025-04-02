@@ -6,6 +6,12 @@ my_app = app.App {
   global_env_vars = {
     MY_GLOBAL_ENV = "global-env"
   }
+  ref_secrets = [
+    "my-app-secret"
+  ]
+  authorized_callers = [
+    "broken-app"
+  ]
   deployments = {
     foo = {
       suffix = "foo"
@@ -13,6 +19,9 @@ my_app = app.App {
       env_vars: {
         MY_DEPLOY_ENV = "foo-env"
       }
+      ref_secrets = [
+        "foo-secret"
+      ]
     }
     bar = {
       suffix = "bar"

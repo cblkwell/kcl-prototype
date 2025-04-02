@@ -8,7 +8,8 @@ schema App:
   deployments?: {str:Deploy}
   cloud_provider?: "aws" | "gcp"
   create_secrets?: [str]
-  global_ref_secrets?: [str]
+  ref_secrets?: [str]
+  authorized_callers?: [str]
 
 schema Deploy:
   suffix: str

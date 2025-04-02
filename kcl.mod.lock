@@ -15,3 +15,11 @@
     reg = "ghcr.io"
     repo = "kcl-lang/konfig"
     oci_tag = "0.11.0"
+  [dependencies.secrets-store-csi-driver]
+    name = "secrets-store-csi-driver"
+    full_name = "secrets-store-csi-driver_0.2.1"
+    version = "0.2.1"
+    sum = "Xh1XpDSyffytt34s3URa6VJ1VKjE96klRhp13yH7ahs="
+    reg = "ghcr.io"
+    repo = "kcl-lang/secrets-store-csi-driver"
+    oci_tag = "0.2.1"
