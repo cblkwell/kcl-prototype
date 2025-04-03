@@ -1,4 +1,4 @@
-To install kcl, you can run `brew install kclvm`.
+To install kcl, you can run `brew install kcl-lang/tap/kcl`.
 
 To generate a set of manifests, run this from the root of the repo:
 

@@ -7,6 +7,7 @@ my_app = app.App {
   }
   ref_secrets = [
     "my-app-secret"
+    "foo-secret"
   ]
   authorized_callers = [
     "broken-app"
@@ -18,6 +19,7 @@ my_app = app.App {
       env_vars: {
         MY_DEPLOY_ENV = "foo-env"
       }
+      # This cannot generate new secretproviderclasses.
       ref_secrets = [
         "foo-secret"
       ]
