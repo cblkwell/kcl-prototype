@@ -106,7 +106,10 @@ mixin DeploymentMixin for protocol.AppProtocol:
                 }
             } for _k, _d in config.deployments if _d.service ]
 
-        #    "SecretProviderClass" += [
-        #      app.RefSecret(_s, config.namespace).secret for _i, _s in _d.ref_secrets
-        #    ]    
+            "SecretProviderClass" += [
+                app.RefSecret(_s, config.namespace, config.cloud_provider).secret \
+                    for _i, _s in _d.ref_secrets if _d.ref_secrets \
+                        for _k, _d in config.deployments
+            ]
+
         }
