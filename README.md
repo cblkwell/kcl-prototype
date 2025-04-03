@@ -1,3 +1,5 @@
+To install kcl, you can run `brew install kclvm`.
+
 To generate a set of manifests, run this from the root of the repo:
 
 ```
