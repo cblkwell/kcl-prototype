@@ -2,6 +2,7 @@ import manifests
 import konfig.models.kube.resource
 
 import models.backend
+import models.app
 
 manifestsResourceMap = lambda resource_map: {str: []} {
   _resource_list = [res_list for _, res_list in resource_map]

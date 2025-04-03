@@ -5,9 +5,9 @@ schema App:
   name: str
   namespace: str = "services"
   global_env_vars?: {str:str}
-  image: str
+  image: str = option("image")
   deployments?: {str:Deploy}
-  cloud_provider?: "aws" | "gcp"
+  cloud_provider: "aws" | "gcp" = option("cloud")
   create_secrets?: [str]
   ref_secrets?: [str]
   authorized_callers?: [str]
@@ -44,15 +44,20 @@ schema Deploy:
     }
   ]
 
-schema RefSecret[secret_name: str, secret_namespace: str]:
+schema RefSecret[secret_name: str, secret_namespace: str, cloud: str]:
   secret: secretsv1.SecretProviderClass = secretsv1.SecretProviderClass {
     metadata.name = secret_name
     metadata.namespace = secret_namespace
     spec = {
-      provider = "aws"
+      provider = cloud
       parameters = {
-        objects = """objectname: ${secret_name}
+        if cloud == "aws":
+          objects = """objectname: ${secret_name}
 objectType: "secretsmanager"
+"""
+        elif cloud == "gcp":
+          secrets = """resourceName: "projects/my-gcp-project/secrets/${secret_name}/versions/latest"
+path: ${secret_name}
 """
       }
     }

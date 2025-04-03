@@ -2,7 +2,6 @@ import models.app
 
 my_app = app.App {
   name = "my-app"
-  image = "ghcr.io/my-app"
   global_env_vars = {
     MY_GLOBAL_ENV = "global-env"
   }

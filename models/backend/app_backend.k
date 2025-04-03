@@ -57,7 +57,7 @@ objectType: "secretsmanager"
 
   if config.ref_secrets:
     globalRefSecrets: [secretsv1.SecretProviderClass] = [
-      app.RefSecret(_s, config.namespace).secret for _i, _s in config.ref_secrets
+      app.RefSecret(_s, config.namespace, config.cloud_provider).secret for _i, _s in config.ref_secrets
     ]
 
   secretProviderClasses: [secretsv1.SecretProviderClass] = sum([[serviceSecret, metadataSecret],globalRefSecrets],[])
