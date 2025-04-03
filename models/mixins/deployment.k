@@ -106,6 +106,9 @@ mixin DeploymentMixin for protocol.AppProtocol:
                 }
             } for _k, _d in config.deployments if _d.service ]
 
+            # This doesn't work -- it says _d.ref_secrets is an undefined type, but
+            # I have no idea why; it must have something to do with the nesting, I
+            # think?
             "SecretProviderClass" += [
                 app.RefSecret(_s, config.namespace, config.cloud_provider).secret \
                     for _i, _s in _d.ref_secrets if _d.ref_secrets \
