@@ -1,4 +1,4 @@
-import models.app
+import kcl_prototype.models.app
 
 my_app = app.App {
   name = "my-app"
