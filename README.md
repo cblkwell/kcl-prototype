@@ -1,7 +1,7 @@
 To install kcl, you can run `brew install kcl-lang/tap/kcl`.
 
-To generate a set of manifests, run this from the root of the repo:
+To generate a set of manifests, cd into `example/redox-prototype/sectors/my-app-prod-aws-use1` and run:
 
 ```
-kcl my-conf.k render/render.k -D image="ghcr.io/image" -D cloud="gcp"
+kcl run -D image="ghcr.io:image"
 ```
