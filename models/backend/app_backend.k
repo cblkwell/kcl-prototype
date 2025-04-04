@@ -42,6 +42,22 @@ objectType: "secretsmanager"
     }
   }
 
+  if config.cloud_provider == "gcp":
+    serviceSecretCloud = app.Secret {
+      metadata.name = "${config.name}-services"
+      spec = {
+        forProvider = {
+          project = "/project/my-gcp-project"
+          labels = {
+            owner = "fet"
+          }
+          replication = [{
+            auto = [{}]
+          }]
+        }
+      }
+    }
+
   metadataSecret = secretsv1.SecretProviderClass {
     metadata.name = "${config.name}-service-metadata"
     metadata.namespace = config.namespace
@@ -61,9 +77,11 @@ objectType: "secretsmanager"
     ]
 
   secretProviderClasses: [secretsv1.SecretProviderClass] = sum([[serviceSecret, metadataSecret],globalRefSecrets],[])
+  gcpSecrets: [app.Secret] = [serviceSecretCloud]
 
   kubernetes: resource.ResourceMapping = {
     "ConfigMap" = [globalEnvConfigMap]
     "ServiceAccount" = [serviceAccount]
     "SecretProviderClass" = [secretProviderClasses]
+    "Secret" = [gcpSecrets]
   }

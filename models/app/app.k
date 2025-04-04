@@ -2,7 +2,7 @@ import k8s.api.core.v1 as corev1
 import secrets_store_csi_driver.v1 as secretsv1
 
 schema App:
-  name: str
+  name?: str
   namespace: str = "services"
   global_env_vars?: {str:str}
   image: str = option("image")
@@ -13,7 +13,7 @@ schema App:
   authorized_callers?: [str]
 
 schema Deploy:
-  suffix: str
+  suffix?: str
   service_account?: str
   env_vars?: {str:str}
   replicas: int = 2
