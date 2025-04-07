@@ -1,5 +1,5 @@
 [package]
-name = "my-app-prod-aws-use1"
+name = "my-app-prod-gcp-usc1"
 edition = "v0.11.1"
 version = "0.0.1"
 
@@ -8,5 +8,3 @@ kcl-prototype = { path = "../../..", version = "0.0.1" }
 
 [profile]
 entries = ["../../base/base.k", "../../prod/prod.k", "main.k", "${kcl-prototype:KCL_MOD}/render/render.k"]
-# entries = ["../../base/base.k", "../../prod/prod.k", "main.k"]
-

@@ -7,7 +7,7 @@ schema App:
   global_env_vars?: {str:str}
   image: str = option("image")
   deployments?: {str:Deploy}
-  cloud_provider: "aws" | "gcp" = option("cloud")
+  cloud_provider?: "aws" | "gcp"
   create_secrets?: [str]
   ref_secrets?: [str]
   authorized_callers?: [str]
@@ -30,7 +30,6 @@ schema Deploy:
     }
   }
   service?: bool = False
-  ref_secrets?: [str]
   ports: [corev1.ContainerPort] = [
     {
       name = "healthcheck"

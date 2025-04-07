@@ -71,17 +71,62 @@ objectType: "secretsmanager"
     }
   }
 
-  if config.ref_secrets:
-    globalRefSecrets: [secretsv1.SecretProviderClass] = [
-      app.RefSecret(_s, config.namespace, config.cloud_provider).secret for _i, _s in config.ref_secrets
-    ]
+  if config.cloud_provider == "gcp":
+    metadataSecretCloud = app.Secret {
+      metadata.name = "${config.name}-service-metadata"
+      spec = {
+        forProvider = {
+          project = "/project/my-gcp-project"
+          labels = {
+            owner = "fet"
+          }
+          replication = [{
+            auto = [{}]
+          }]
+        }
+      }
+    }
 
-  secretProviderClasses: [secretsv1.SecretProviderClass] = sum([[serviceSecret, metadataSecret],globalRefSecrets],[])
-  gcpSecrets: [app.Secret] = [serviceSecretCloud]
+  refSecrets: [secretsv1.SecretProviderClass] = [ secretsv1.SecretProviderClass {
+    metadata.name = _s
+    metadata.namespace = config.namespace
+    spec = {
+      provider = config.cloud_provider
+      parameters = {
+        if config.cloud_provider == "aws":
+          objects = """objectname: ${_s}
+objectType: "secretsmanager"
+"""
+        elif config.cloud_provider == "gcp":
+          secrets = """resourceName: "projects/my-gcp-project/secrets/${_s}/versions/latest"
+path: ${_s}
+"""
+      }
+    } 
+  } for _i, _s in config.ref_secrets ] + [serviceSecret]
+
+  createSecrets: [app.Secret]
+
+  if config.create_secrets:
+    if config.cloud_provider == "gcp":
+      createSecrets = [ app.Secret {
+        metadata.name = _s
+        spec = {
+          forProvider = {
+            project = "/project/my-gcp-project"
+            labels = {
+              owner = "fet"
+            }
+            replication = [{
+              auto = [{}]
+            }]
+          }
+        }
+      } for _i, _s in config.create_secrets] + [serviceSecretCloud, metadataSecretCloud]
 
   kubernetes: resource.ResourceMapping = {
     "ConfigMap" = [globalEnvConfigMap]
     "ServiceAccount" = [serviceAccount]
-    "SecretProviderClass" = [secretProviderClasses]
-    "Secret" = [gcpSecrets]
+    "SecretProviderClass" = refSecrets + [metadataSecret]
+    "Secret" = [createSecrets]
   }

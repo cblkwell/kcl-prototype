@@ -6,4 +6,3 @@ import models.app
 protocol AppProtocol:
     config: app.App
     kubernetes: resource.ResourceMapping
-    secretProviderClasses: [secretsv1.SecretProviderClass]

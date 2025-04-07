@@ -61,7 +61,11 @@ mixin DeploymentMixin for protocol.AppProtocol:
                                     mountPath = "/mnt/secrets/${_s.metadata.name}"
                                     name = _s.metadata.name
                                     readOnly = True
-                                } for _i, _s in secretProviderClasses ]
+                                } for _i, _s in refSecrets ] + [ corev1.VolumeMount {
+                                    mountPath = "/mnt/service-metadata/${_s}"
+                                    name = "${_s}-service-metadata"
+                                    readOnly = True
+                                }]
                             }
                         ]
                         volumes = [ corev1.Volume {
@@ -69,11 +73,20 @@ mixin DeploymentMixin for protocol.AppProtocol:
                                 driver = "secrets-store.csi.k8s.io"
                                 readOnly = True
                                 volumeAttributes = {
-                                   secretProviderClass = _s.metadata.name
+                                    secretProviderClass = _s.metadata.name
                                 }
                             }
                             name = _s.metadata.name
-                        } for _i, _s in secretProviderClasses ]
+                        } for _i, _s in refSecrets ] + [ corev1.Volume {
+                            csi = {
+                                driver = "secrets-store.csi.k8s.io"
+                                readOnly = True
+                                volumeAttributes = {
+                                    secretProviderClass = "${_s}-service-metadata"
+                                }
+                            }
+                            name = _s
+                        } for _i, _s in config.authorized_callers ]
                     }
                 }
             } for _k, _d in config.deployments]
@@ -106,7 +119,4 @@ mixin DeploymentMixin for protocol.AppProtocol:
                 }
             } for _k, _d in config.deployments if _d.service ]
 
-        #    "SecretProviderClass" += [
-        #      app.RefSecret(_s, config.namespace).secret for _i, _s in _d.ref_secrets
-        #    ]    
         }
