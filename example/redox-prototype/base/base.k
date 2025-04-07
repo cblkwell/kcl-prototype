@@ -11,6 +11,7 @@ my_app: app.App {
   ref_secrets = [
     "my-app-secret"
     "foo-secret"
+    "created-secret"
   ]
   authorized_callers = [
     "broken-app"

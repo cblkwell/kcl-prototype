@@ -105,7 +105,7 @@ path: ${_s}
     } 
   } for _i, _s in config.ref_secrets ] + [serviceSecret]
 
-  createSecrets: [app.Secret]
+  createSecrets: [app.Secret] = []
 
   if config.create_secrets:
     if config.cloud_provider == "gcp":
