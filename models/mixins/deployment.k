@@ -65,7 +65,7 @@ mixin DeploymentMixin for protocol.AppProtocol:
                                     mountPath = "/mnt/service-metadata/${_s}"
                                     name = "${_s}-service-metadata"
                                     readOnly = True
-                                }]
+                                } for _i, _s in config.authorized_callers ]
                             }
                         ]
                         volumes = [ corev1.Volume {

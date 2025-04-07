@@ -1,0 +1,410 @@
+apiVersion: v1
+data:
+  PROD_ENV: prod-env
+  MY_GLOBAL_ENV: sector-env
+kind: ConfigMap
+metadata:
+  name: my-app-global-env
+  namespace: services
+---
+apiVersion: v1
+data:
+  MY_DEPLOY_ENV: foo-env
+kind: ConfigMap
+metadata:
+  name: my-app-foo-env
+  namespace: services
+---
+apiVersion: v1
+data:
+  MY_DEPLOY_ENV: bar-env
+kind: ConfigMap
+metadata:
+  name: my-app-bar-env
+  namespace: services
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-app-default
+  namespace: services
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: my-app-secret
+  namespace: services
+spec:
+  parameters:
+    objects: |
+      objectname: my-app-secret
+      objectType: "secretsmanager"
+  provider: aws
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: foo-secret
+  namespace: services
+spec:
+  parameters:
+    objects: |
+      objectname: foo-secret
+      objectType: "secretsmanager"
+  provider: aws
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: created-secret
+  namespace: services
+spec:
+  parameters:
+    objects: |
+      objectname: created-secret
+      objectType: "secretsmanager"
+  provider: aws
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: my-app-services
+  namespace: services
+spec:
+  parameters:
+    objects: |
+      objectName: services/my-app
+      objectType: "secretsmanager"
+  provider: aws
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: my-app-service-metadata
+  namespace: services
+spec:
+  parameters:
+    objects: |
+      objectName: service-metadata/my-app
+      objectType: "secretsmanager"
+  provider: aws
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-foo
+  namespace: services
+spec:
+  replicas: 12
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: my-app-foo
+  template:
+    spec:
+      containers:
+      - command:
+        - bash
+        - '-c'
+        - node .node_modules/.bin/redox-start -- src/index.ts
+        env:
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        envFrom:
+        - configMapRef:
+            name: cluster-constants
+        - configMapRef:
+            name: my-app-global-env
+        - configMapRef:
+            name: my-app-foo-env
+        image: ghcr.io/image
+        name: my-app-foo
+        ports:
+        - containerPort: 3001
+          name: healthcheck
+          protocol: TCP
+        - containerPort: 3443
+          name: https
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '1'
+            memory: '1Gi'
+            disk: '20Gi'
+          requests:
+            cpu: '500m'
+            memory: '512Mi'
+            disk: '10Gi'
+        volumeMounts:
+        - mountPath: /mnt/secrets/my-app-secret
+          name: my-app-secret
+          readOnly: true
+        - mountPath: /mnt/secrets/foo-secret
+          name: foo-secret
+          readOnly: true
+        - mountPath: /mnt/secrets/created-secret
+          name: created-secret
+          readOnly: true
+        - mountPath: /mnt/secrets/my-app-services
+          name: my-app-services
+          readOnly: true
+        - mountPath: /mnt/service-metadata/broken-app
+          name: broken-app-service-metadata
+          readOnly: true
+      serviceAccountName: my-app-default
+      volumes:
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: my-app-secret
+        name: my-app-secret
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: foo-secret
+        name: foo-secret
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: created-secret
+        name: created-secret
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: my-app-services
+        name: my-app-services
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: broken-app-service-metadata
+        name: broken-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-bar
+  namespace: services
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: my-app-bar
+  template:
+    spec:
+      containers:
+      - command:
+        - bash
+        - '-c'
+        - node .node_modules/.bin/redox-start -- src/index.ts
+        env:
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        envFrom:
+        - configMapRef:
+            name: cluster-constants
+        - configMapRef:
+            name: my-app-global-env
+        - configMapRef:
+            name: my-app-bar-env
+        image: ghcr.io/image
+        name: my-app-bar
+        ports:
+        - containerPort: 3001
+          name: healthcheck
+          protocol: TCP
+        - containerPort: 3443
+          name: https
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '1'
+            memory: '1Gi'
+            disk: '20Gi'
+          requests:
+            cpu: '500m'
+            memory: '512Mi'
+            disk: '10Gi'
+        volumeMounts:
+        - mountPath: /mnt/secrets/my-app-secret
+          name: my-app-secret
+          readOnly: true
+        - mountPath: /mnt/secrets/foo-secret
+          name: foo-secret
+          readOnly: true
+        - mountPath: /mnt/secrets/created-secret
+          name: created-secret
+          readOnly: true
+        - mountPath: /mnt/secrets/my-app-services
+          name: my-app-services
+          readOnly: true
+        - mountPath: /mnt/service-metadata/broken-app
+          name: broken-app-service-metadata
+          readOnly: true
+      serviceAccountName: my-app-default
+      volumes:
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: my-app-secret
+        name: my-app-secret
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: foo-secret
+        name: foo-secret
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: created-secret
+        name: created-secret
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: my-app-services
+        name: my-app-services
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: broken-app-service-metadata
+        name: broken-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-baz
+  namespace: services
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: my-app-baz
+  template:
+    spec:
+      containers:
+      - command:
+        - bash
+        - '-c'
+        - node .node_modules/.bin/redox-start -- src/index.ts
+        env:
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        envFrom:
+        - configMapRef:
+            name: cluster-constants
+        - configMapRef:
+            name: my-app-global-env
+        - configMapRef:
+            name: my-app-baz-env
+        image: ghcr.io/image
+        name: my-app-baz
+        ports:
+        - containerPort: 3001
+          name: healthcheck
+          protocol: TCP
+        - containerPort: 3443
+          name: https
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '1'
+            memory: '1Gi'
+            disk: '20Gi'
+          requests:
+            cpu: '500m'
+            memory: '512Mi'
+            disk: '10Gi'
+        volumeMounts:
+        - mountPath: /mnt/secrets/my-app-secret
+          name: my-app-secret
+          readOnly: true
+        - mountPath: /mnt/secrets/foo-secret
+          name: foo-secret
+          readOnly: true
+        - mountPath: /mnt/secrets/created-secret
+          name: created-secret
+          readOnly: true
+        - mountPath: /mnt/secrets/my-app-services
+          name: my-app-services
+          readOnly: true
+        - mountPath: /mnt/service-metadata/broken-app
+          name: broken-app-service-metadata
+          readOnly: true
+      serviceAccountName: my-app-default
+      volumes:
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: my-app-secret
+        name: my-app-secret
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: foo-secret
+        name: foo-secret
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: created-secret
+        name: created-secret
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: my-app-services
+        name: my-app-services
+      - csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: broken-app-service-metadata
+        name: broken-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-foo
+spec:
+  ports:
+  - name: https
+    port: 443
+    targetPort: 3443
+  selector:
+    app.kubernetes.io/component: foo
+    app.kubernetes.io/part-of: my-app
+  type: ClusterIP
