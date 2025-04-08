@@ -27,3 +27,6 @@ This section indicates that it takes the base configuration, then overlays
 the prod configuration, then the sector configuration, and then sends the
 combined configuration through to a renderer which turns that into the
 actual Kubernetes manifests.
+
+The output of the above command has been left as `output.txt` in the
+sector directories if you just want to see what it looks like.
