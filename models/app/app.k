@@ -21,12 +21,10 @@ schema Deploy:
     limits = {
       cpu = "1"
       memory = "1Gi"
-      disk = "20Gi"
     }
   requests = {
       cpu = "500m"
       memory = "512Mi"
-      disk = "10Gi"
     }
   }
   service?: bool = False
